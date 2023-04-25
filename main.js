@@ -311,6 +311,17 @@ connectButton.addEventListener("click", async () => {
   }
 });
 
+async function connect() {
+  // Check if MetaMask is installed
+  if (typeof window.ethereum !== 'undefined') {
+    // Request account access if needed
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    console.log('MetaMask connected');
+  } else {
+    alert('Please install MetaMask to connect your wallet');
+  }
+}
+
 
 updateUI();
 setInterval(updateUI, 5000);
