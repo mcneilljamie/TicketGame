@@ -1,88 +1,72 @@
-// SPDX-License-Identifier: MIT
+const web3 = new Web3(new Web3.providers.HttpProvider('https://bsc-node.quicknode.com/your-endpoint-here'));
 
-pragma solidity ^0.8.0;
+const contractAddress = '0x47b4C3860aA5baCD36D18100F19BBCDe9cbba40F';
+const contractABI = [{...}];
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+const ticketContract = new web3.eth.Contract(contractABI, contractAddress);
 
-// Rest of your contract code
-
-
-contract TicketGame is ReentrancyGuard {
-    address private constant BNB_TOKEN = 0x3a0c5583d5AbADEcD7bb043709c4b1aED89267D6;
-    IERC20 private bnb;
-
-    uint256 public constant STARTING_PRICE = 0.00001 ether;
-    uint256 public constant TICKETS_PER_DOUBLING = 10000000;
-    uint256 public constant INCREMENT_TIME = 1;
-    uint256 public constant INITIAL_COUNTDOWN = 24 hours;
-
-    uint256 public ticketPrice = STARTING_PRICE;
-    uint256 public totalTicketsSold;
-    uint256 public currentRoundTickets;
-    uint256 public countdown;
-    uint256 public gameEndTime;
-    address public lastBuyer;
-
-    mapping(address => uint256) public ticketsOf;
-    mapping(address => uint256) public claimedRewards;
-
-    event TicketPurchased(address buyer, uint256 amount);
-    event GameEnded(address winner, uint256 jackpot, uint256 endTime);
-
-    constructor() {
-        bnb = IERC20(BNB_TOKEN);
-        countdown = INITIAL_COUNTDOWN;
+// Connect Metamask wallet
+const connectWallet = async () => {
+  try {
+    // Check if Metamask is installed
+    if (typeof window.ethereum !== 'undefined') {
+      // Request account access if needed
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      // Get the current account address from Metamask
+      const accounts = await web3.eth.getAccounts();
+      const currentAccount = accounts[0];
+      console.log('Connected to Metamask with address:', currentAccount);
+    } else {
+      console.log('Please install Metamask to use this dApp');
     }
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-    function buyTickets(uint256 amount) external nonReentrant {
-        require(gameEndTime == 0 || block.timestamp < gameEndTime, "Game already ended.");
-        uint256 cost = ticketPrice * amount;
-        bnb.transferFrom(msg.sender, address(this), cost);
-
-        ticketsOf[msg.sender] += amount;
-        totalTicketsSold += amount;
-        currentRoundTickets += amount;
-
-        if (lastBuyer == address(0) && currentRoundTickets >= 2) {
-            gameEndTime = block.timestamp + countdown;
-        } else if (gameEndTime > 0) {
-            gameEndTime += INCREMENT_TIME * amount;
-            countdown += INCREMENT_TIME * amount;
-        }
-
-        lastBuyer = msg.sender;
-
-        if (totalTicketsSold / TICKETS_PER_DOUBLING > (totalTicketsSold - amount) / TICKETS_PER_DOUBLING) {
-            ticketPrice *= 2;
-        }
-
-        emit TicketPurchased(msg.sender, amount);
+// Buy tickets function
+const buyTickets = async () => {
+  try {
+    // Check if user is connected to Metamask
+    const accounts = await web3.eth.getAccounts();
+    if (accounts.length === 0) {
+      console.log('Please connect to Metamask to buy tickets');
+      return;
     }
+    // Get the amount of tickets to buy from the input field
+    const ticketsInput = document.getElementById('ticketsInput');
+    const ticketsAmount = ticketsInput.value;
+    // Call the buyTickets function on the contract
+    await ticketContract.methods.buyTickets(ticketsAmount).send({ value: web3.utils.toWei(String(ticketPrice * ticketsAmount)), from: accounts[0] });
+    console.log(`Bought ${ticketsAmount} tickets`);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
-    function claimRewards() external nonReentrant {
-        require(block.timestamp >= gameEndTime, "Game has not ended yet.");
-        require(claimedRewards[msg.sender] == 0, "Rewards already claimed.");
+// Listen for events emitted by the contract
+ticketContract.events.GameEnded({}, (error, event) => {
+  if (error) {
+    console.log(error);
+    return;
+  }
+  console.log('Game ended');
+  console.log('Winner:', event.returnValues.winner);
+  console.log('Jackpot:', web3.utils.fromWei(event.returnValues.jackpot));
+  console.log('End time:', new Date(event.returnValues.endTime * 1000));
+});
 
-        uint256 jackpot = bnb.balanceOf(address(this)) * 7 / 10;
-        uint256 distribution = bnb.balanceOf(address(this)) * 15 / 100;
+ticketContract.events.TicketPurchased({}, (error, event) => {
+  if (error) {
+    console.log(error);
+    return;
+  }
+  console.log('Ticket purchased');
+  console.log('Buyer:', event.returnValues.buyer);
+  console.log('Amount:', web3.utils.fromWei(event.returnValues.amount));
+});
 
-        if (msg.sender == lastBuyer) {
-            bnb.transfer(msg.sender, jackpot);
-            claimedRewards[msg.sender] = jackpot;
-            emit GameEnded(msg.sender, jackpot, gameEndTime);
-        } else {
-            uint256 userReward = distribution * ticketsOf[msg.sender] / totalTicketsSold;
-            bnb.transfer(msg.sender, userReward);
-            claimedRewards[msg.sender] = userReward;
-        }
-    }
-
-    function claimDevFee() external nonReentrant {
-        require(msg.sender == BNB_TOKEN, "Only the dev wallet can claim this fee.");
-        require(block.timestamp >= gameEndTime, "Game has not ended yet.");
-
-        uint256 devFee = bnb.balanceOf(address(this)) * 15 / 100;
-        bnb.transfer(msg.sender, devFee);
-    }
-}
+// Display countdown timer
+const countdownTimer = setInterval(async () => {
+  const currentTime = Math.floor(new Date().getTime() / 1000);
+  const gameEndTime = await ticket
