@@ -250,6 +250,8 @@ const CONTRACT_ABI = [
   ]
 ];
 
+let contract;
+
 async function connect() {
   if (typeof window.ethereum !== 'undefined') {
     try {
@@ -273,7 +275,32 @@ async function connect() {
   }
 }
 
-// Other functions (getTicketPrice, getCountdown, getStats, etc.)
+async function getTicketPrice() {
+  const ticketPrice = await contract.methods.ticketPrice().call();
+  document.getElementById('ticket-price').innerText = web3.utils.fromWei(ticketPrice, 'ether') + ' BNB';
+}
+
+async function getCountdown() {
+  const remainingTime = await contract.methods.remainingTime().call();
+  // Convert the remainingTime to a readable format
+  const seconds = parseInt(remainingTime % 60);
+  const minutes = parseInt((remainingTime / 60) % 60);
+  const hours = parseInt((remainingTime / 3600) % 24);
+  const days = parseInt(remainingTime / 86400);
+
+  const countdownString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  document.getElementById('countdown').innerText = countdownString;
+}
+
+async function getStats() {
+  const totalTickets = await contract.methods.totalTickets().call();
+  const prizePool = await contract.methods.prizePool().call();
+  const lastWinner = await contract.methods.lastWinner().call();
+
+  document.getElementById('total-tickets').innerText = totalTickets;
+  document.getElementById('prize-pool').innerText = web3.utils.fromWei(prizePool, 'ether') + ' BNB';
+  document.getElementById('last-winner').innerText = lastWinner;
+}
 
 // Connect to MetaMask when the page loads
 window.addEventListener('DOMContentLoaded', connect);
