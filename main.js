@@ -303,6 +303,10 @@ async function getStats() {
   document.getElementById('last-winner').innerText = lastWinner;
 }
 
+const connectButton = document.getElementById('connect-button');
+connectButton.addEventListener('click', connect);
+
+
 // Buy tickets function
 const buyTickets = async () => {
   // Get the amount of tickets to buy from the input field
