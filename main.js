@@ -295,5 +295,22 @@ async function updateUI() {
   document.getElementById('myTickets').innerText = myTickets;
 }
 
+// Add a button to connect to Metamask
+const connectButton = document.getElementById("connectButton");
+connectButton.addEventListener("click", async () => {
+  if (window.ethereum) {
+    try {
+      // Request account access
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      console.log("Connected to Metamask");
+    } catch (error) {
+      console.error(error);
+    }
+  } else {
+    console.log('Metamask not detected');
+  }
+});
+
+
 updateUI();
 setInterval(updateUI, 5000);
