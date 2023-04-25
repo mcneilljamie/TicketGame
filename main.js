@@ -250,66 +250,30 @@ const CONTRACT_ABI = [
   ]
 ];
 
-const web3 = new Web3(Web3.givenProvider);
-const contractInstance = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
-
-document.getElementById('buy-tickets').addEventListener('click', async () => {
-  const amount = document.getElementById('tickets-amount').value;
-  await buyTickets(amount);
-});
-
-document.getElementById('claim-rewards').addEventListener('click', async () => {
-  await claimRewards();
-});
-
-async function buyTickets(amount) {
-  const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-  const account = accounts[0];
-
-  const ticketPrice = await contractInstance.methods.ticketPrice().call();
-  const totalCost = BigInt(ticketPrice) * BigInt(amount);
-
-  await contractInstance.methods.buyTickets(amount).send({ from: account, value: totalCost.toString() });
-}
-
-async function claimRewards() {
-  const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-  const account = accounts[0];
-
-  await contractInstance.methods.claimRewards().send({ from: account });
-}
-
-async function updateUI() {
-  const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-  const account = accounts[0];
-
-  const remainingTime = await contractInstance.methods.countdown().call();
-  const ticketPrice = await contractInstance.methods.ticketPrice().call();
-  const totalTicketsSold = await contractInstance.methods.totalTicketsSold().call();
-  const myTickets = await contractInstance.methods.ticketsOf(account).call();
-
-  document.getElementById('countdown').innerText = remainingTime;
-  document.getElementById('ticket-price').innerText = web3.utils.fromWei(ticketPrice, 'ether');
-  document.getElementById('total-tickets').innerText = totalTicketsSold;
-  document.getElementById('your-tickets').innerText = myTickets;
-}
-
-// Add a button to connect to Metamask
-const connectButton = document.getElementById("connect");
-connectButton.addEventListener("click", async () => {
-  await connect();
-});
-
 async function connect() {
-  // Check if MetaMask is installed
   if (typeof window.ethereum !== 'undefined') {
-    // Request account access if needed
-    await window.ethereum.request({ method: 'eth_requestAccounts' });
-    console.log('MetaMask connected');
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const account = accounts[0];
+      console.log('Connected with account:', account);
+
+      // Create a new Web3 instance and contract instance
+      const web3 = new Web3(window.ethereum);
+      contract = new web3.eth.Contract(contractABI, contractAddress);
+
+      // Call other functions after a successful connection
+      getTicketPrice();
+      getCountdown();
+      getStats();
+    } catch (error) {
+      console.error('User rejected connection:', error);
+    }
   } else {
-    alert('Please install MetaMask to connect your wallet');
+    alert('Please install MetaMask or use a Web3-enabled browser.');
   }
 }
 
-updateUI();
-setInterval(updateUI, 5000);
+// Other functions (getTicketPrice, getCountdown, getStats, etc.)
+
+// Connect to MetaMask when the page loads
+window.addEventListener('DOMContentLoaded', connect);
