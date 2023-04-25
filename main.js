@@ -1,7 +1,7 @@
-const CONTRACT_ADDRESS = '0x47b4C3860aA5baCD36D18100F19BBCDe9cbba40F';
-const CONTRACT_ABI = [
-  [
-    [
+const web3 = new Web3(window.ethereum);
+
+const contractAddress = '0x47b4C3860aA5baCD36D18100F19BBCDe9cbba40F';
+const contractABI = [{ [
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -246,11 +246,9 @@ const CONTRACT_ABI = [
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
-  ]
-];
+] }];
 
-let contract;
+const ticketContract = new web3.eth.Contract(contractABI, contractAddress);
 
 async function connect() {
   if (typeof window.ethereum !== 'undefined') {
@@ -258,10 +256,6 @@ async function connect() {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const account = accounts[0];
       console.log('Connected with account:', account);
-
-      // Create a new Web3 instance and contract instance
-      const web3 = new Web3(window.ethereum);
-      contract = new web3.eth.Contract(contractABI, contractAddress);
 
       // Call other functions after a successful connection
       getTicketPrice();
@@ -276,31 +270,60 @@ async function connect() {
 }
 
 async function getTicketPrice() {
-  const ticketPrice = await contract.methods.ticketPrice().call();
+  const ticketPrice = await ticketContract.methods.ticketPrice().call();
   document.getElementById('ticket-price').innerText = web3.utils.fromWei(ticketPrice, 'ether') + ' BNB';
 }
 
 async function getCountdown() {
-  const remainingTime = await contract.methods.remainingTime().call();
-  // Convert the remainingTime to a readable format
-  const seconds = parseInt(remainingTime % 60);
-  const minutes = parseInt((remainingTime / 60) % 60);
-  const hours = parseInt((remainingTime / 3600) % 24);
-  const days = parseInt(remainingTime / 86400);
+  const remainingTime = await ticketContract.methods.countdown().call();
+  const currentTime = Math.floor(Date.now() / 1000);
+  const gameEndTime = await ticketContract.methods.gameEndTime().call();
+  const timeLeft = gameEndTime - currentTime;
 
-  const countdownString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
-  document.getElementById('countdown').innerText = countdownString;
+  if (timeLeft > 0) {
+    const hours = Math.floor(timeLeft / 3600);
+    const minutes = Math.floor((timeLeft % 3600) / 60);
+    const seconds = timeLeft % 60;
+
+    document.getElementById('countdown').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  } else {
+    document.getElementById('countdown').innerText = '00:00:00';
+  }
 }
 
 async function getStats() {
-  const totalTickets = await contract.methods.totalTickets().call();
-  const prizePool = await contract.methods.prizePool().call();
-  const lastWinner = await contract.methods.lastWinner().call();
+  const totalTickets = await ticketContract.methods.totalTicketsSold().call();
+  const prizePool = await ticketContract.methods.totalTicketsSold().call();
+  const lastWinner = await ticketContract.methods.lastBuyer().call();
 
   document.getElementById('total-tickets').innerText = totalTickets;
   document.getElementById('prize-pool').innerText = web3.utils.fromWei(prizePool, 'ether') + ' BNB';
   document.getElementById('last-winner').innerText = lastWinner;
 }
 
-// Connect to MetaMask when the page loads
-window.addEventListener('DOMContentLoaded', connect);
+// Buy tickets function
+const buyTickets = async () => {
+  // Get the amount of tickets to buy from the input field
+  const ticketsInput = document.getElementById('tickets-amount');
+  const ticketsAmount = ticketsInput.value;
+
+  try {
+    // Get the current account address from MetaMask
+    const accounts = await web3.eth.getAccounts();
+    const currentAccount = accounts[0];
+
+    // Calculate the cost of the tickets
+    const ticketPrice = await ticketContract.methods.ticketPrice().call();
+    const cost = web3.utils.toWei(String(ticketPrice * ticketsAmount), 'ether');
+
+    // Call the buyTickets function on the contract
+    await ticketContract.methods.buyTickets(ticketsAmount).send({ value: cost, from: currentAccount });
+    console.log(`Bought ${ticketsAmount} tickets`);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+// Claim rewards function
+const claimRewards = async () => {
+ 
