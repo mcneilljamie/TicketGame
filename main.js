@@ -1,7 +1,7 @@
 const web3 = new Web3(window.ethereum);
 
 const contractAddress = '0x47b4C3860aA5baCD36D18100F19BBCDe9cbba40F';
-const contractABI = [{ [
+const contractABI = 
 	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
@@ -246,7 +246,7 @@ const contractABI = [{ [
 		"stateMutability": "view",
 		"type": "function"
 	}
-] }];
+;
 
 const ticketContract = new web3.eth.Contract(contractABI, contractAddress);
 
