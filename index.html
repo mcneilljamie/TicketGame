@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Game</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header>
+        <h1>Ticket Game</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Buy Tickets</h2>
+            <p>Current ticket price: <span id="ticket-price">0.00001 BNB</span></p>
+            <label for="tickets-amount">Amount of tickets:</label>
+            <input type="number" id="tickets-amount" min="1" value="1">
+            <button id="buy-tickets">Buy Tickets</button>
+        </section>
+
+        <section>
+            <h2>Countdown</h2>
+            <p>Time remaining: <span id="countdown">24:00:00</span></p>
+        </section>
+
+        <section>
+            <h2>Your Tickets & Rewards</h2>
+            <p>Tickets purchased: <span id="your-tickets">0</span></p>
+            <p>Available rewards: <span id="your-rewards">0 BNB</span></p>
+            <button id="claim-rewards">Claim Rewards</button>
+        </section>
+
+        <section>
+            <h2>Game Stats</h2>
+            <p>Total tickets sold: <span id="total-tickets">0</span></p>
+            <p>Total prize pool: <span id="prize-pool">0 BNB</span></p>
+            <p>Last winner: <span id="last-winner">-</span></p>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; Ticket Game 2023. All rights reserved.</p>
+    </footer>
+    <script src="./scripts/main.js"></script>
+</body>
+
+<!-- Import web3.js -->
+<script src="https://cdn.jsdelivr.net/npm/web3@1.5.3/dist/web3.min.js"></script>
+
+
+
+</html>
